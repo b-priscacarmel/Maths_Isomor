@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Subgraph Isomorphism vs Botnet Stars</title>
+<style>
+:root{--bg:#fff;--panel:#f6f7f9;--text:#1b2a4a;--muted:#5c6b7a;--border:#dde2e8;--red:#b3303d;--green:#1f6f5c;--amber:#9c6b00;--node:#3a4553;--edge:#8a94a3;color-scheme:light;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}
+.wrap{max-width:980px;margin:0 auto;padding:1.5rem 1rem 3rem}
+h1{font:600 1.55rem Georgia,serif;margin:0 0 .3rem}
+.sub{color:var(--muted);margin:0 0 1rem;max-width:75ch}
+.thm{background:var(--panel);border:1px solid var(--border);border-left:4px solid var(--red);border-radius:8px;padding:.7rem 1rem;margin-bottom:1rem;font-size:.9rem}
+.grid{display:grid;grid-template-columns:1.5fr 1fr;gap:1rem}
+@media(max-width:720px){.grid{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:.9rem}
+.card h3{margin:0 0 .5rem;font-size:1rem}
+svg{width:100%;height:auto;display:block}
+.btns{display:flex;flex-wrap:wrap;gap:.5rem;margin:.9rem 0}
+button{font:600 .84rem system-ui;padding:.55rem .9rem;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);cursor:pointer}
+button.p{background:var(--red);color:#fff;border-color:var(--red)}
+.row{display:flex;justify-content:space-between;border-bottom:1px dashed var(--border);padding:.3rem 0;font-size:.85rem;gap:.5rem}
+.row:last-child{border:0}.row span:last-child{color:var(--muted);font-family:ui-monospace,monospace;text-align:right}
+.big{font:600 1.15rem Georgia,serif;margin-bottom:.4rem}
+.bad{color:var(--red)}.good{color:var(--green)}
+.log{max-height:170px;overflow-y:auto;font:.76rem ui-monospace,monospace;margin-top:.6rem}
+.log div{padding:.2rem 0;border-bottom:1px dashed var(--border)}
+.leg{display:flex;flex-wrap:wrap;gap:.8rem;font-size:.76rem;color:var(--muted);margin:.5rem 0 0}
+.leg i{display:inline-block;width:18px;border-top:3px solid;vertical-align:middle;margin-right:.3rem}
+.tw{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:.84rem}
+th,td{border-bottom:1px solid var(--border);padding:.35rem .5rem;text-align:left}
+.bar{height:8px;background:var(--red);border-radius:4px}
+label{font-size:.85rem;color:var(--muted)}
+</style></head><body><div class="wrap">
+<h1>Can the botnet pattern live in the network?</h1>
+<p class="sub">Pattern H = a hub with 4 leaves (star K<sub>1,4</sub>). We search the network G for copies of H (subgraph isomorphism), cut edges so none remain, then test whether an attacker with a budget of k new edges can rebuild one.</p>
+<div class="thm"><b>Result.</b> G contains K<sub>1,4</sub> iff some node has degree ≥ 4, and the number of copies is Σ C(deg(v),4). An attacker needs 4 − Δ(G′) new edges to rebuild one, so to stop budget k the defender must cap Δ at 3 − k. Capping at 3 alone leaves the attacker a cost of just 1.</div>
+<div class="grid">
+<div class="card"><h3>Network G <span id="rnd" style="color:var(--muted);font-weight:400"></span></h3><svg id="svg" viewBox="0 0 360 360"></svg>
+<div class="leg"><span><i style="border-color:var(--edge)"></i>link</span><span><i style="border-color:var(--red)"></i>edge in a star copy</span><span><i style="border-color:var(--edge);border-top-style:dashed;opacity:.5"></i>cut</span><span><i style="border-color:var(--amber);border-top-style:dashed"></i>attacker's new edge</span></div></div>
+<div><div class="card" style="margin-bottom:1rem;text-align:center"><h3>Attacker pattern H</h3>
+<svg viewBox="0 0 170 150" style="max-width:190px;margin:0 auto"><g stroke="var(--edge)" stroke-width="2.2"><line x1="85" y1="75" x2="85" y2="20"/><line x1="85" y1="75" x2="140" y2="75"/><line x1="85" y1="75" x2="85" y2="130"/><line x1="85" y1="75" x2="30" y2="75"/></g>
+<g stroke="#fff" stroke-width="2"><circle cx="85" cy="75" r="15" fill="var(--red)"/><circle cx="85" cy="20" r="11" fill="var(--green)"/><circle cx="140" cy="75" r="11" fill="var(--green)"/><circle cx="85" cy="130" r="11" fill="var(--green)"/><circle cx="30" cy="75" r="11" fill="var(--green)"/></g>
+<g fill="#fff" font-size="10" font-weight="700" text-anchor="middle"><text x="85" y="79">H</text><text x="85" y="24">L</text><text x="140" y="79">L</text><text x="85" y="134">L</text><text x="30" y="79">L</text></g></svg>
+<p style="margin:.3rem 0 0;font-size:.78rem;color:var(--muted)">hub + 4 leaves (K<sub>1,4</sub>). We look for this inside G.</p></div>
+<div class="card"><h3>Status</h3><div class="big" id="verdict">Generate a network</div>
+<div class="row"><span>edges now</span><span id="sE">0</span></div>
+<div class="row"><span>star copies found</span><span id="sM">0</span></div>
+<div class="row"><span>hub nodes (deg ≥ 4)</span><span id="sH">0</span></div>
+<div class="row"><span>max degree Δ</span><span id="sD">0</span></div>
+<div class="row"><span>attacker cost (4 − Δ)</span><span id="sC">0</span></div>
+<div class="row"><span>edges cut so far</span><span id="sR">0</span></div>
+<div class="row"><span>lower bound for cap-3 cut</span><span id="sL">0</span></div>
+<div class="log" id="log"></div></div></div></div>
+<div class="btns">
+<button class="p" id="bN">New network</button>
+<button id="b1">1. Detect copies of H</button>
+<button id="b2">2. Cut (cap degree at 3)</button>
+<button id="b3">3. Attacker rebuilds</button>
+<button id="b4">4. Defender hardens (cap = 3 − k)</button>
+<label>Attacker budget k = <b id="kv">1</b> <input type="range" id="k" min="1" max="3" value="1"></label></div>
+<div class="card"><h3>Trade-off on the original network</h3><div class="tw"><table><thead><tr><th>Attacker budget k</th><th>Degree cap</th><th>Edges lost</th><th>Isolated nodes</th><th></th></tr></thead><tbody id="tb"></tbody></table></div>
+<p class="sub" style="margin:.6rem 0 0;font-size:.82rem">Edge removal is greedy (it prefers edges whose endpoints are both over the cap); the optimum is a polynomial b-matching problem. Real botnets are not clean stars, and for general H both detection and the minimum cut are NP-hard.</p></div>
+</div>
+<script>
+const N=14,C=180,R=150;let st={},round=0,removedTotal=0;
+const $=id=>document.getElementById(id);
+const key=(a,b)=>a<b?a+'-'+b:b+'-'+a;
+const P=i=>{const a=-Math.PI/2+i*2*Math.PI/N;return[C+R*Math.cos(a),C+R*Math.sin(a)]};
+function deg(){const d=Array(N).fill(0);for(const k in st){if(st[k]!=='removed'){const[a,b]=k.split('-').map(Number);d[a]++;d[b]++}}return d}
+const comb4=n=>n<4?0:n*(n-1)*(n-2)*(n-3)/24;
+function build(){let tries=0;do{st={};for(let i=0;i<N;i++)for(let j=i+1;j<N;j++)if(Math.random()<.28)st[key(i,j)]='orig'}while(deg().every(x=>x<4)&&++tries<50);
+orig={...st};round=0;removedTotal=0;$('log').innerHTML='';}
+let orig={};
+function lg(m){const d=document.createElement('div');d.textContent=m;$('log').prepend(d)}
+function capCut(s,cap){const rem=[];while(true){const d=Array(N).fill(0);for(const k in s)if(s[k]!=='removed'){const[a,b]=k.split('-').map(Number);d[a]++;d[b]++}
+let best=null,bs=-1;for(const k in s){if(s[k]==='removed')continue;const[a,b]=k.split('-').map(Number);const o=(d[a]>cap)+(d[b]>cap);if(!o)continue;const sc=o*100+d[a]+d[b];if(sc>bs){bs=sc;best=k}}
+if(!best)break;s[best]='removed';rem.push(best)}return rem}
+function draw(hl){const dg=deg(),hubs=new Set(hl?dg.map((x,i)=>x>=4?i:-1).filter(i=>i>=0):[]);let s='';
+for(const k in st){const[a,b]=k.split('-').map(Number),[x1,y1]=P(a),[x2,y2]=P(b);let c='stroke:var(--edge);stroke-width:1.8',x='';
+if(st[k]==='removed'){c='stroke:var(--edge);stroke-width:1.6;opacity:.35';x=' stroke-dasharray="5 4"'}
+else if(st[k]==='added'){c='stroke:var(--amber);stroke-width:2.6';x=' stroke-dasharray="4 3"'}
+if(st[k]!=='removed'&&(hubs.has(a)||hubs.has(b)))c='stroke:var(--red);stroke-width:2.8';
+s+=`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" style="${c}"${x}/>`}
+for(let i=0;i<N;i++){const[x,y]=P(i);s+=`<circle cx="${x}" cy="${y}" r="13" fill="${hubs.has(i)?'var(--red)':'var(--node)'}" stroke="var(--bg)" stroke-width="2"/><text x="${x}" y="${y+4}" text-anchor="middle" font-size="10" font-weight="700" fill="#fff">${i}</text>`}
+$('svg').innerHTML=s;$('rnd').textContent=round?'— round '+round:'';stats()}
+function stats(){const d=deg(),D=Math.max(...d),hubs=d.filter(x=>x>=4).length,m=d.reduce((a,x)=>a+comb4(x),0),E=Object.values(st).filter(v=>v!=='removed').length;
+$('sE').textContent=E;$('sM').textContent=m;$('sH').textContent=hubs;$('sD').textContent=D;$('sC').textContent=Math.max(0,4-D);$('sR').textContent=removedTotal;
+$('sL').textContent=Math.ceil(d.reduce((a,x)=>a+Math.max(0,x-3),0)/2);
+const v=$('verdict');if(m){v.textContent='Attacker pattern present';v.className='big bad'}else{v.textContent='No copy of H in G';v.className='big good'}}
+function tradeoff(){let h='';const tot=Object.keys(orig).length||1;for(let k=0;k<=3;k++){const s={...orig},cap=3-k,rem=capCut(s,cap);const d=Array(N).fill(0);for(const q in s)if(s[q]!=='removed'){const[a,b]=q.split('-').map(Number);d[a]++;d[b]++}
+h+=`<tr><td>${k}</td><td>${cap}</td><td>${rem.length} (${Math.round(100*rem.length/tot)}%)</td><td>${d.filter(x=>!x).length}</td><td style="width:30%"><div class="bar" style="width:${100*rem.length/tot}%"></div></td></tr>`}$('tb').innerHTML=h}
+function all(){build();tradeoff();draw(false);lg('New network: '+Object.keys(st).length+' links. Detect to search for H.')}
+$('bN').onclick=all;
+$('k').oninput=()=>$('kv').textContent=$('k').value;
+$('b1').onclick=()=>{const d=deg(),hubs=d.map((x,i)=>x>=4?i:-1).filter(i=>i>=0);round=round||0;
+if(!hubs.length){lg('Search finished: 0 copies of K1,4. G is H-free.');draw(false);return}
+hubs.forEach(h=>lg(`Hub ${h}: degree ${d[h]} -> ${comb4(d[h])} copies of H`));lg('Total copies: '+d.reduce((a,x)=>a+comb4(x),0));draw(true)};
+$('b2').onclick=()=>{const rem=capCut(st,3);round++;removedTotal+=rem.length;lg(`Round ${round}: cut ${rem.length} edge(s): ${rem.join(', ')||'none'}`);
+lg('Re-running detection: '+deg().reduce((a,x)=>a+comb4(x),0)+' copies remain');draw(false)};
+$('b3').onclick=()=>{const k=+$('k').value,d=deg();let v=0;d.forEach((x,i)=>{if(x>d[v])v=i});const need=Math.max(0,4-d[v]);
+if(need===0){lg('H already present. Nothing to rebuild.');draw(true);return}
+if(need>k){lg(`Best node ${v} has degree ${d[v]}: attacker needs ${need} edges but budget is ${k}. Attack fails.`);draw(false);return}
+let a=0;for(let j=0;j<N&&a<need;j++){if(j===v)continue;const q=key(v,j);if(!st[q]||st[q]==='removed'){st[q]='added';a++}}
+round++;lg(`Attacker adds ${a} edge(s) at node ${v} (budget ${k}). H is back.`);draw(true)};
+$('b4').onclick=()=>{const k=+$('k').value,cap=Math.max(0,3-k),rem=capCut(st,cap);round++;removedTotal+=rem.length;
+lg(`Hardened to degree cap ${cap}: cut ${rem.length} more edge(s). Attacker now needs ${4-Math.max(...deg())} edges (budget ${k}).`);draw(false)};
+all();
+</script></body></html>
